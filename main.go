@@ -10,11 +10,12 @@ import (
 	"os"
 	"sort"
 	"strconv"
+//	"strings"
 )
 
 var path = flag.String("path", "data/data.csv", "path to dataset")
-var firstTown = flag.Int("from", 0, "from town")
-var lastTown = flag.Int("to", 1, "to town")
+var firstTown = flag.Int("from", 4, "from town")
+var lastTown = flag.Int("to", 7, "to town")
 
 func getData(path string) (townmap [][]int) {
 	f, _ := os.Open(path)
@@ -41,10 +42,7 @@ func getData(path string) (townmap [][]int) {
 	return
 }
 
-type Genome interface {
-	Fitness() float64
-}
-type Population []Genome
+type Population []TownPath
 
 func (pop Population) Len() int {
 	return len(pop)
@@ -56,82 +54,144 @@ func (pop Population) Swap(i, j int) {
 	pop[i], pop[j] = pop[j], pop[i]
 }
 
-type Generator func() Genome
-type Mutator func(Genome) Genome
-type Childor func(Genome, Genome) Genome
+type Generator func() TownPath
 
-func Mutation(population []Genome, mutator Mutator, awesome int) {
-	for _, v := range population[awesome:] {
-		if rand.Float64() > 0.4 {
-			v = mutator(v)
-		}
-
-	}
-}
-
-func Selection([]Genome) {
-
-}
-
-func NewGeneration([]Genome) {
-
-}
-
-func Result() int {
-	return 0
-}
-
-func GenericAlg(random_gen Generator, awesome_number, population_size, epochs, verbose int) {
-	generation := make([]Genome, population_size)
+func GenericAlg(random_gen Generator, awesome_number, population_size, epochs, step int, mutation_prob float64, verbose int) {
+	generation := make([]TownPath, population_size)
+	all_generations := []TownPath{}
+	all_generations_map := make(map[string]struct{})
 	for i := 0; i < population_size; i++ {
 		generation[i] = random_gen()
-	}
-	sort.Sort(Population(generation))
-	for i := 0; i < epochs; i++ {
-		Mutation(generation, mutate, awesome_number)
-		Selection(generation)
-		//NewGeneration(generation)
-		if verbose > 0 {
-			fmt.Printf("Эпоха %d: Лучший результат = %d", i+1, Result())
+		if _, ok := all_generations_map[fmt.Sprint(generation[i])]; !ok {
+			all_generations = append(all_generations, generation[i])
+			all_generations_map[fmt.Sprint(generation[i].path)] = struct{}{}
 		}
 	}
+
+	for i := 0; i < epochs; i++ {
+		sort.Sort(Population(generation))
+		//size := len(all_generations)
+		for i := 0; i <= population_size / 2; i++ {
+			generation_crossover := make([]TownPath, step)
+			for j := 0; j < step; j++ {
+				generation_crossover[j] = all_generations[int(rand.Float64()*float64(len(all_generations)))]
+			}
+			sort.Sort(Population(generation_crossover))
+			new_gen1, new_gen2 := generation_crossover[0].crossover(&generation_crossover[1])
+			if _, ok := all_generations_map[fmt.Sprint(new_gen1.path)]; !ok {
+				all_generations = append(all_generations, new_gen1)
+				all_generations_map[fmt.Sprint(new_gen1.path)] = struct{}{}
+			}
+			if _, ok := all_generations_map[fmt.Sprint(new_gen2.path)]; !ok {
+				all_generations = append(all_generations, new_gen2)
+				all_generations_map[fmt.Sprint(new_gen2.path)] = struct{}{}
+			}
+			//all_generations = append(all_generations, new_gen1, new_gen2)
+		}
+		//fmt.Print(new_generation[0])
+		for i := range all_generations {
+			if (rand.Float64() < mutation_prob) {
+				gen := all_generations[i].mutate()
+				if _, ok := all_generations_map[fmt.Sprint(gen.path)]; !ok {
+					all_generations = append(all_generations, gen)
+					all_generations_map[fmt.Sprint(gen.path)] = struct{}{}
+				}
+			}
+		}
+		//for i := 0; i < awesome_number; i++ {
+		//	all_generations = append(all_generations, generation[i])
+		//}
+		fmt.Println(len(all_generations))
+
+		sort.Sort(Population(all_generations))
+		copy(generation, all_generations)
+		//sort.Sort(Population(generation))
+		if verbose == 1 {
+			fmt.Printf("Эпоха %d: Лучший результат = %.2f %v\n", i+1, generation[0].Fitness(), generation[0])
+		} else if verbose == 2 {
+			fmt.Printf("Особи эпохи %d: %v\n", i+1, generation)
+		}
+		//generation
+	}
+	fmt.Println(all_generations_map)
 }
 
-func mutate(gen TownPath) TownPath {
-	index := int(rand.Float64() * float64(len(gen.townNums)))
-	gen.townNums[index] = int(rand.Float64() * float64(len(gen.townMap[0])))
-	return gen
+func (tp TownPath) mutate() TownPath {
+
+	index := int(rand.Float64() * float64(len(tp.path) - 1))
+	//fmt.Print(index)
+	tp.path[index] = tp.path[index + 1]
+
+	return tp
+}
+
+func (tp1 *TownPath) crossover(tp2 *TownPath) (tp3 TownPath, tp4 TownPath) {
+	index := int(rand.Float64() * float64(len(tp1.path)))
+	tp3 = TownPath{
+		townMap:   tp1.townMap,
+		firstTown: tp1.firstTown,
+		lastTown:  tp2.lastTown,
+		path:      make([]int, len(tp1.path)),
+	}
+	tp4 = TownPath{
+		townMap:   tp1.townMap,
+		firstTown: tp1.firstTown,
+		lastTown:  tp2.lastTown,
+		path:      make([]int, len(tp1.path)),
+	}
+	copy(tp3.path, tp1.path)
+	copy(tp4.path, tp2.path)
+	for i := 0; i < index; i++ {
+		tp3.path[i] = tp2.path[i]
+		tp4.path[len(tp4.path)-1-i] = tp1.path[len(tp1.path)-1-i]
+	}
+	//fmt.Println(tp3, tp4)
+	return
+}
+
+func (tp *TownPath) randomTown() int {
+	size := len(tp.path)
+	temp_town := int(rand.Float64() * float64(size))
+	for temp_town == tp.lastTown {
+		temp_town = int(rand.Float64() * float64(size))
+	}
+	return temp_town
 }
 
 type TownPath struct {
-	first_town *int
-	last_town  *int
-	townMap    *[][]int
-	townNums   []int
+	townMap   *[][]int
+	firstTown int
+	lastTown  int
+	path      []int
 }
 
 func (tp TownPath) Fitness() float64 {
 	sum := 0
-	last_val := *tp.first_town
 	tmap := *(tp.townMap)
-	for _, val := range tp.townNums {
+	last_val := tp.firstTown
+	for _, val := range tp.path {
 		sum += tmap[last_val][val]
+		last_val = val
 	}
-	sum += tmap[last_val][*tp.last_town]
+	sum += tmap[last_val][tp.lastTown]
 	return float64(sum)
 }
 
 func RandomPath(first_town, last_town, size int, townMap *[][]int) Generator {
-	return func() Genome {
-		townNums := make([]int, size)
+	return func() TownPath {
+		townNums := []int{}
 		for i := 0; i < size; i++ {
-			townNums[i] = int(rand.Float64() * float64(size))
+			temp_town := int(rand.Float64() * float64(size))
+			for temp_town == last_town {
+				temp_town = int(rand.Float64() * float64(size))
+			}
+			townNums = append(townNums, temp_town)
 		}
 		return TownPath{
-			first_town: &first_town,
-			last_town:  &last_town,
-			townNums:   townNums,
-			townMap:    townMap,
+			firstTown: first_town,
+			lastTown:  last_town,
+			path:      townNums,
+			townMap:   townMap,
 		}
 	}
 }
@@ -139,5 +199,13 @@ func RandomPath(first_town, last_town, size int, townMap *[][]int) Generator {
 func main() {
 	flag.Parse()
 	townMap := getData(*path)
-	GenericAlg(RandomPath(*firstTown, *lastTown, len(townMap[0]), &townMap), 0, 20, 1, 1)
+	GenericAlg(
+		RandomPath(*firstTown, *lastTown, len(townMap[0]), &townMap),
+		4,
+		200,
+		500,
+		5,
+		0.1,
+		1,
+	)
 }

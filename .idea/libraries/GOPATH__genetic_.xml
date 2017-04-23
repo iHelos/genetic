@@ -1,0 +1,25 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;genetic&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../go/src/gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../go/src/cloud.google.com" />
+      <root url="file://$PROJECT_DIR$/../go/src/github.com" />
+      <root url="file://$PROJECT_DIR$/../go/src/golang.org" />
+      <root url="file://$PROJECT_DIR$/../go/src/google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../go/src/layeh.com" />
+      <root url="file://$PROJECT_DIR$/../go/src/awesomeProject" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../go/src/gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../go/src/cloud.google.com" />
+      <root url="file://$PROJECT_DIR$/../go/src/github.com" />
+      <root url="file://$PROJECT_DIR$/../go/src/golang.org" />
+      <root url="file://$PROJECT_DIR$/../go/src/google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../go/src/layeh.com" />
+      <root url="file://$PROJECT_DIR$/../go/src/awesomeProject" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>

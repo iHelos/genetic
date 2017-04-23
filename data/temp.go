@@ -14,7 +14,7 @@ import (
 
 var path = flag.String("path", "data/data.csv", "path to dataset")
 var firstTown = flag.Int("from", 0, "from town")
-var lastTown = flag.Int("to", 1, "to town")
+var lastTown = flag.Int("to", 9, "to town")
 
 func getData(path string) (townmap [][]int) {
 	f, _ := os.Open(path)
