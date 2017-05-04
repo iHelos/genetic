@@ -213,7 +213,7 @@ func main() {
 	GenericAlgNeuron(
 		train_x[:100],
 		train_y[:100],
-		0,
+		1,
 		250,
 		10000,
 		5,
